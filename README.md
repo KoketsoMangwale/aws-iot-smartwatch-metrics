@@ -1,6 +1,7 @@
 # 🕒 Smart Watch Real-Time Streaming Platform (AWS PoC)
+A proof-of-concept real-time health monitoring system for smartwatches using AWS IoT Core, EventBridge Pipes, and SNS. It captures live biometric data (e.g., heart rate, steps, SpO₂) 
+from wearable devices via MQTT, routes events to the default EventBridge bus, and delivers real-time alerts to subscribed users when health thresholds are exceeded.
 
-A proof-of-concept **real-time health monitoring system** for smart watches using AWS IoT Core, Kinesis, Lambda, DynamoDB, and SNS.
 It simulates live biometric data (heart rate, steps, SpO₂) from wearable devices, processes it in real time, stores it, and triggers alerts if health thresholds are exceeded.
 
 ---
@@ -42,7 +43,7 @@ smartwatch-poc/
 
 * [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html) configured
 * [AWS SAM CLI](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/install-sam-cli.html)
-* Python 3.9+
+* Python 3.13
 * MQTT certificates for AWS IoT Core (for simulator)
 * IAM permissions to deploy SAM stacks
 
