@@ -1,0 +1,91 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  Smartwatch IoT → MQTT → IoT Rule → Default EventBridge Bus → Pipe → SNS Email
+
+Resources:
+
+  ## SNS Topic
+  SmartwatchSNSTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: smartwatch-alerts
+
+  ## SNS Email Subscription
+  SmartwatchSNSTopicSubscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      Protocol: email
+      Endpoint: your-email@example.com   # <-- replace with your email
+      TopicArn: !Ref SmartwatchSNSTopic
+
+  ## IoT Rule to send MQTT messages to EventBridge default event bus
+  SmartwatchIoTRule:
+    Type: AWS::IoT::TopicRule
+    Properties:
+      RuleName: smartwatch_iot_rule
+      TopicRulePayload:
+        sql: "SELECT * FROM 'smartwatch/metrics'"
+        awsIotSqlVersion: "2016-03-23"
+        ruleDisabled: false
+        Actions:
+          - EventBridge:
+              RoleArn: !GetAtt IoTRuleRole.Arn
+
+  ## Role for IoT Rule to put events to EventBridge default bus
+  IoTRuleRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: iot.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: IoTToEventBridgePolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: events:PutEvents
+                Resource: !Sub "arn:aws:events:${AWS::Region}:${AWS::AccountId}:event-bus/default"
+
+  ## EventBridge Pipe from default bus to SNS
+  SmartwatchEventPipe:
+    Type: AWS::Pipes::Pipe
+    Properties:
+      Name: smartwatch-pipe
+      RoleArn: !GetAtt PipeRole.Arn
+      Source: !Sub "arn:aws:events:${AWS::Region}:${AWS::AccountId}:event-bus/default"
+      SourceParameters:
+        EventBridgeEventBusParameters: {}
+        FilterCriteria:
+          Filters:
+            - Pattern: |
+                {
+                  "source": ["aws.iot"]
+                }
+      Target: !Ref SmartwatchSNSTopic
+
+  ## Role for EventBridge Pipe
+  PipeRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: pipes.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: PipeToSNSPolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - sns:Publish
+                Resource: !Ref SmartwatchSNSTopic
