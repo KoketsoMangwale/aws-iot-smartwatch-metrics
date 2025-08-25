@@ -16,7 +16,7 @@ Resources:
     Type: AWS::SNS::Subscription
     Properties:
       Protocol: email
-      Endpoint: your-email@example.com   # <-- replace with your email
+      Endpoint: bmangwale@gmail.com   # <-- replace with your email
       TopicArn: !Ref SmartwatchSNSTopic
 
   ## IoT Rule to send MQTT messages to EventBridge default event bus
