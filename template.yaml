@@ -25,12 +25,12 @@ Resources:
     Properties:
       RuleName: smartwatch_iot_rule
       TopicRulePayload:
-        sql: "SELECT * FROM 'smartwatch/metrics'"
-        awsIotSqlVersion: "2016-03-23"
-        ruleDisabled: false
+        Sql: "SELECT * FROM 'smartwatch/metrics'"
+        AwsIotSqlVersion: "2016-03-23"
+        RuleDisabled: false
         Actions:
           - EventBridge:
-              RoleArn: !GetAtt IoTRuleRole.Arn
+              EventBusName: "default"   # use default bus
 
   ## Role for IoT Rule to put events to EventBridge default bus
   IoTRuleRole:
