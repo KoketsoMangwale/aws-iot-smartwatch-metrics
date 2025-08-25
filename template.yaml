@@ -29,8 +29,9 @@ Resources:
         AwsIotSqlVersion: "2016-03-23"
         RuleDisabled: false
         Actions:
-          - EventBridge:
-              EventBusName: "default"   # use default bus
+          - CloudwatchEvents:
+              RoleArn: !GetAtt IoTRuleRole.Arn
+              EventBusName: "default"
 
   ## Role for IoT Rule to put events to EventBridge default bus
   IoTRuleRole:
