@@ -59,14 +59,6 @@ Resources:
       Name: smartwatch-pipe
       RoleArn: !GetAtt PipeRole.Arn
       Source: !Sub "arn:aws:events:${AWS::Region}:${AWS::AccountId}:event-bus/default"
-      SourceParameters:
-        EventBridgeEventBusParameters: {}
-        FilterCriteria:
-          Filters:
-            - Pattern: |
-                {
-                  "source": ["aws.iot"]
-                }
       Target: !Ref SmartwatchSNSTopic
 
   ## Role for EventBridge Pipe
