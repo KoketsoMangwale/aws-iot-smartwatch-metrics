@@ -1,11 +1,11 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 Description: >
-  Smartwatch IoT → MQTT → IoT Rule → Default EventBridge Bus → Pipe → SNS Email
-  Now includes Kinesis Data Stream as source.
+  Smartwatch IoT → MQTT → IoT Rule → Kinesis Stream → EventBridge Pipe → SNS Email
 
 Resources:
 
+  # SNS Topic
   SmartwatchSNSTopic:
     Type: AWS::SNS::Topic
     Properties:
@@ -18,7 +18,15 @@ Resources:
       Endpoint: bmangwale@gmail.com
       TopicArn: !Ref SmartwatchSNSTopic
 
-  # IoT Rule Role
+  # Kinesis Data Stream
+  SmartwatchKinesisStream:
+    Type: AWS::Kinesis::Stream
+    Properties:
+      Name: smartwatch-stream
+      ShardCount: 1
+      RetentionPeriodHours: 24
+
+  # IoT Rule Role (for writing to Kinesis)
   IoTRuleRole:
     Type: AWS::IAM::Role
     Properties:
@@ -30,16 +38,17 @@ Resources:
               Service: iot.amazonaws.com
             Action: sts:AssumeRole
       Policies:
-        - PolicyName: IoTRulePutEventsPolicy
+        - PolicyName: IoTRuleKinesisPolicy
           PolicyDocument:
             Version: "2012-10-17"
             Statement:
               - Effect: Allow
                 Action:
-                  - events:PutEvents
-                Resource: "*"
+                  - kinesis:PutRecord
+                  - kinesis:PutRecords
+                Resource: !GetAtt SmartwatchKinesisStream.Arn
 
-  # IoT Topic Rule sending to EventBridge
+  # IoT Topic Rule: send messages to Kinesis
   SmartwatchIoTRule:
     Type: AWS::IoT::TopicRule
     Properties:
@@ -49,30 +58,12 @@ Resources:
         AwsIotSqlVersion: "2016-03-23"
         RuleDisabled: false
         Actions:
-          - EventBridge:
+          - Kinesis:
               RoleArn: !GetAtt IoTRuleRole.Arn
-              EventBusName: default
+              StreamName: !Ref SmartwatchKinesisStream
+              PartitionKey: "${topic()}"
 
-  # Kinesis Data Stream
-  SmartwatchKinesisStream:
-    Type: AWS::Kinesis::Stream
-    Properties:
-      Name: smartwatch-stream
-      ShardCount: 1
-      RetentionPeriodHours: 24
-
-  # Pipe: Kinesis → SNS
-  SmartwatchEventPipe:
-    Type: AWS::Pipes::Pipe
-    Properties:
-      RoleArn: !GetAtt PipeRole.Arn
-      Source: !GetAtt SmartwatchKinesisStream.Arn
-      SourceParameters:
-        KinesisStreamParameters:
-          BatchSize: 100
-          MaximumBatchingWindowInSeconds: 60
-      Target: !Ref SmartwatchSNSTopic
-
+  # EventBridge Pipe Role
   PipeRole:
     Type: AWS::IAM::Role
     Properties:
@@ -99,3 +90,15 @@ Resources:
                   - kinesis:DescribeStream
                   - kinesis:ListShards
                 Resource: !GetAtt SmartwatchKinesisStream.Arn
+
+  # EventBridge Pipe: Kinesis → SNS
+  SmartwatchEventPipe:
+    Type: AWS::Pipes::Pipe
+    Properties:
+      RoleArn: !GetAtt PipeRole.Arn
+      Source: !GetAtt SmartwatchKinesisStream.Arn
+      SourceParameters:
+        KinesisStreamParameters:
+          BatchSize: 100
+          MaximumBatchingWindowInSeconds: 60
+      Target: !Ref SmartwatchSNSTopic
