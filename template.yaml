@@ -5,50 +5,40 @@ Description: >
 
 Resources:
 
-  ## SNS Topic
+Resources:
+
   SmartwatchSNSTopic:
     Type: AWS::SNS::Topic
     Properties:
       TopicName: smartwatch-alerts
 
-  ## SNS Email Subscription
   SmartwatchSNSTopicSubscription:
     Type: AWS::SNS::Subscription
     Properties:
       Protocol: email
-      Endpoint: bmangwale@gmail.com   # <-- replace with your email
+      Endpoint: bmangwale@gmail.com
       TopicArn: !Ref SmartwatchSNSTopic
 
-  ## Role for IoT Rule to put events to EventBridge default bus
-  IoTRuleRole:
-    Type: AWS::IAM::Role
+  # IoT Rule → EventBridge Event Bus
+  SmartwatchIoTRule:
+    Type: AWS::IoT::TopicRule
     Properties:
-      AssumeRolePolicyDocument:
-        Version: "2012-10-17"
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service: iot.amazonaws.com
-            Action: sts:AssumeRole
-      Policies:
-        - PolicyName: IoTToEventBridgePolicy
-          PolicyDocument:
-            Version: "2012-10-17"
-            Statement:
-              - Effect: Allow
-                Action: events:PutEvents
-                Resource: !Sub "arn:aws:events:${AWS::Region}:${AWS::AccountId}:event-bus/default"
+      RuleName: SmartwatchIoTRule
+      TopicRulePayload:
+        Sql: "SELECT * FROM 'smartwatch/alerts'"
+        Actions:
+          - EventBridge:
+              EventBusName: default   # <-- sends to default EventBridge bus
+        RuleDisabled: false
 
-  ## EventBridge Pipe from default bus to SNS
+  # Pipe: EventBridge → SNS
   SmartwatchEventPipe:
     Type: AWS::Pipes::Pipe
     Properties:
-      Name: smartwatch-pipe
       RoleArn: !GetAtt PipeRole.Arn
-      Source: !Sub "arn:aws:events:${AWS::Region}:${AWS::AccountId}:event-bus/default"
+      Source: arn:aws:events:!Ref AWS::Region:!Ref AWS::AccountId:event-bus/default
       Target: !Ref SmartwatchSNSTopic
 
-  ## Role for EventBridge Pipe
   PipeRole:
     Type: AWS::IAM::Role
     Properties:
@@ -60,7 +50,7 @@ Resources:
               Service: pipes.amazonaws.com
             Action: sts:AssumeRole
       Policies:
-        - PolicyName: PipeToSNSPolicy
+        - PolicyName: PipePolicy
           PolicyDocument:
             Version: "2012-10-17"
             Statement:
@@ -68,3 +58,8 @@ Resources:
                 Action:
                   - sns:Publish
                 Resource: !Ref SmartwatchSNSTopic
+              - Effect: Allow
+                Action:
+                  - events:*
+                Resource: "*"
+
