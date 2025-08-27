@@ -21,7 +21,6 @@ Resources:
   IoTRuleRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: IoTRuleToEventBridgeRole
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
@@ -43,7 +42,7 @@ Resources:
   SmartwatchIoTRule:
     Type: AWS::IoT::TopicRule
     Properties:
-      # RuleName: SmartwatchIoTRule
+      RuleName: SmartwatchIoTRule
       TopicRulePayload:
         Sql: "SELECT * FROM 'smartwatch/topic'"
         AwsIotSqlVersion: "2016-03-23"
