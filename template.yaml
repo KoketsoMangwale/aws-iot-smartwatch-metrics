@@ -39,14 +39,14 @@ Resources:
                 Resource: "*"
 
   # IoT Rule to EventBridge Event Bus
-  SmartwatchIoTRule:
-    Type: AWS::IoT::TopicRule
-    Properties:
-      RuleName: SmartwatchIoTRule
-      TopicRulePayload:
-        Sql: "SELECT * FROM 'smartwatch/topic'"
-        AwsIotSqlVersion: "2016-03-23"
-        RuleDisabled: false
+SmartwatchIoTRule:
+  Type: AWS::IoT::TopicRule
+  Properties:
+    RuleName: SmartwatchIoTRule
+    TopicRulePayload:
+      Sql: "SELECT * FROM 'smartwatch/topic'"
+      AwsIotSqlVersion: "2016-03-23"
+      RuleDisabled: false
       Actions:
         - EventBridge:
             RoleArn: !GetAtt IoTRuleRole.Arn
