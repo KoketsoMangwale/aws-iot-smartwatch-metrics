@@ -5,8 +5,6 @@ Description: >
 
 Resources:
 
-Resources:
-
   SmartwatchSNSTopic:
     Type: AWS::SNS::Topic
     Properties:
@@ -18,8 +16,30 @@ Resources:
       Protocol: email
       Endpoint: bmangwale@gmail.com
       TopicArn: !Ref SmartwatchSNSTopic
+      
+  # IoT Rule Role
+  IoTRuleRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: IoTRuleToEventBridgeRole
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: iot.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: IoTRulePutEventsPolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - events:PutEvents
+                Resource: "*"
 
-  # IoT Rule → EventBridge Event Bus
+  # IoT Rule to EventBridge Event Bus
   SmartwatchIoTRule:
     Type: AWS::IoT::TopicRule
     Properties:
@@ -35,7 +55,7 @@ Resources:
               # Optionally, you can specify an InputTemplate if needed
 
 
-  # Pipe: EventBridge → SNS
+  # Pipe: EventBridge to SNS
   SmartwatchEventPipe:
     Type: AWS::Pipes::Pipe
     Properties:
