@@ -2,6 +2,7 @@ AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 Description: >
   Smartwatch IoT → MQTT → IoT Rule → Default EventBridge Bus → Pipe → SNS Email
+  Now includes Kinesis Data Stream as source.
 
 Resources:
 
@@ -16,7 +17,7 @@ Resources:
       Protocol: email
       Endpoint: bmangwale@gmail.com
       TopicArn: !Ref SmartwatchSNSTopic
-      
+
   # IoT Rule Role
   IoTRuleRole:
     Type: AWS::IAM::Role
@@ -38,13 +39,38 @@ Resources:
                   - events:PutEvents
                 Resource: "*"
 
+  # IoT Topic Rule sending to EventBridge
+  SmartwatchIoTRule:
+    Type: AWS::IoT::TopicRule
+    Properties:
+      RuleName: SmartwatchIoTRule
+      TopicRulePayload:
+        Sql: "SELECT * FROM 'smartwatch/topic'"
+        AwsIotSqlVersion: "2016-03-23"
+        RuleDisabled: false
+        Actions:
+          - EventBridge:
+              RoleArn: !GetAtt IoTRuleRole.Arn
+              EventBusName: default
 
-  # Pipe: EventBridge to SNS
+  # Kinesis Data Stream
+  SmartwatchKinesisStream:
+    Type: AWS::Kinesis::Stream
+    Properties:
+      Name: smartwatch-stream
+      ShardCount: 1
+      RetentionPeriodHours: 24
+
+  # Pipe: Kinesis → SNS
   SmartwatchEventPipe:
     Type: AWS::Pipes::Pipe
     Properties:
       RoleArn: !GetAtt PipeRole.Arn
-      Source: !Sub arn:aws:events:${AWS::Region}:${AWS::AccountId}:event-bus/default
+      Source: !GetAtt SmartwatchKinesisStream.Arn
+      SourceParameters:
+        KinesisStreamParameters:
+          BatchSize: 100
+          MaximumBatchingWindowInSeconds: 60
       Target: !Ref SmartwatchSNSTopic
 
   PipeRole:
@@ -68,6 +94,8 @@ Resources:
                 Resource: !Ref SmartwatchSNSTopic
               - Effect: Allow
                 Action:
-                  - events:*
-                Resource: "*"
-
+                  - kinesis:GetRecords
+                  - kinesis:GetShardIterator
+                  - kinesis:DescribeStream
+                  - kinesis:ListShards
+                Resource: !GetAtt SmartwatchKinesisStream.Arn
