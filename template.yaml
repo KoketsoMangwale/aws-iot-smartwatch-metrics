@@ -47,11 +47,10 @@ Resources:
         Sql: "SELECT * FROM 'smartwatch/topic'"
         AwsIotSqlVersion: "2016-03-23"
         RuleDisabled: false
-        Actions:
-          - CloudwatchEvent:
-              RoleArn: !GetAtt IoTRuleRole.Arn
-              EventBusName: default
-              # Optionally, you can specify an InputTemplate if needed
+      Actions:
+        - EventBridge:
+            RoleArn: !GetAtt IoTRuleRole.Arn
+            EventBusName: default
 
 
   # Pipe: EventBridge to SNS
