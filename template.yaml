@@ -43,7 +43,7 @@ Resources:
   SmartwatchIoTRule:
     Type: AWS::IoT::TopicRule
     Properties:
-      RuleName: SmartwatchIoTRule
+      # RuleName: SmartwatchIoTRule
       TopicRulePayload:
         Sql: "SELECT * FROM 'smartwatch/topic'"
         AwsIotSqlVersion: "2016-03-23"
