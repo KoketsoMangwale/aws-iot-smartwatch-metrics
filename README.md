@@ -122,11 +122,38 @@ python simulator/smartwatch_simulator.py
 
 ---
 
-## 🔍 Testing
-
-* **DynamoDB** → Table `SmartWatchData` should receive records.
-* **Kinesis** → View incoming records from IoT Core.
+## 🔍 Testing via MQTT Test Client
+#### Test Payload under `smartwatch/topic` Topic Name
+```
+{
+  "deviceId": "smartwatch-020",
+  "timestamp": "2025-08-21T10:17:00Z",
+  "data": {
+    "heartRate": 150,
+    "steps": 4521,
+    "temperature": 36.6,
+    "spo2": 97,
+    "alert": "ON"
+  }
+}
+```
+* **DynamoDB** → Table `SmartWatchData` should receive records. (Table to be created as a future enhancement)
+* **Kinesis** → View incoming records from IoT Core, under **Data Stream** > `Data viewer` tab.
+* **EnventBridge Pipe** Filtering → To check for a treshold before alerts are sent, add a filter as below to the Pipe
+  ```
+  {
+  "data": {
+    "heartRate": [{
+      "numeric": [">", 150]
+    }],
+    "alert": [{
+      "equals-ignore-case": "ON"
+    }]
+  }
+  }
+  ```
 * **SNS** → Subscribe an email/phone and receive alerts when heart rate > 150 bpm.
+> SNS Topic email subscriptions should be confirmed
 
 ---
 
