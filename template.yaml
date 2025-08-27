@@ -25,11 +25,15 @@ Resources:
     Properties:
       RuleName: SmartwatchIoTRule
       TopicRulePayload:
-        Sql: "SELECT * FROM 'smartwatch/alerts'"
-        Actions:
-          - EventBridge:
-              EventBusName: default   # <-- sends to default EventBridge bus
+        Sql: "SELECT * FROM 'smartwatch/topic'"
+        AwsIotSqlVersion: "2016-03-23"
         RuleDisabled: false
+        Actions:
+          - CloudwatchEvent:
+              RoleArn: !GetAtt IoTRuleRole.Arn
+              EventBusName: default
+              # Optionally, you can specify an InputTemplate if needed
+
 
   # Pipe: EventBridge → SNS
   SmartwatchEventPipe:
