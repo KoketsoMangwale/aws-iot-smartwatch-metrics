@@ -19,20 +19,6 @@ Resources:
       Endpoint: bmangwale@gmail.com   # <-- replace with your email
       TopicArn: !Ref SmartwatchSNSTopic
 
-  ## IoT Rule to send MQTT messages to EventBridge default event bus
-  SmartwatchIoTRule:
-    Type: AWS::IoT::TopicRule
-    Properties:
-      RuleName: smartwatch_iot_rule
-      TopicRulePayload:
-        Sql: "SELECT * FROM 'smartwatch/metrics'"
-        AwsIotSqlVersion: "2016-03-23"
-        RuleDisabled: false
-        Actions:
-          - CloudwatchEvents:
-              RoleArn: !GetAtt IoTRuleRole.Arn
-              EventBusName: "default"
-
   ## Role for IoT Rule to put events to EventBridge default bus
   IoTRuleRole:
     Type: AWS::IAM::Role
