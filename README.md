@@ -122,7 +122,7 @@ python simulator/smartwatch_simulator.py
 
 ---
 
-## 🔍 Testing via MQTT Test Client
+## 🔍 Testing via MQTT Test Client Console
 #### Test Payload under `smartwatch/topic` Topic Name
 ```
 {
