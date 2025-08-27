@@ -5,7 +5,6 @@ Description: >
 
 Resources:
 
-  # SNS Topic
   SmartwatchSNSTopic:
     Type: AWS::SNS::Topic
     Properties:
@@ -24,9 +23,8 @@ Resources:
     Properties:
       Name: smartwatch-stream
       ShardCount: 1
-      RetentionPeriodHours: 24
 
-  # IoT Rule Role (for writing to Kinesis)
+  # IoT Rule Role
   IoTRuleRole:
     Type: AWS::IAM::Role
     Properties:
@@ -45,10 +43,9 @@ Resources:
               - Effect: Allow
                 Action:
                   - kinesis:PutRecord
-                  - kinesis:PutRecords
                 Resource: !GetAtt SmartwatchKinesisStream.Arn
 
-  # IoT Topic Rule: send messages to Kinesis
+  # IoT Rule → Kinesis
   SmartwatchIoTRule:
     Type: AWS::IoT::TopicRule
     Properties:
@@ -61,9 +58,19 @@ Resources:
           - Kinesis:
               RoleArn: !GetAtt IoTRuleRole.Arn
               StreamName: !Ref SmartwatchKinesisStream
-              PartitionKey: "${topic()}"
+              PartitionKey: "${topic()}"   # use topic name as partition key
 
-  # EventBridge Pipe Role
+  # Pipe: Kinesis → SNS
+  SmartwatchEventPipe:
+    Type: AWS::Pipes::Pipe
+    Properties:
+      RoleArn: !GetAtt PipeRole.Arn
+      Source: !GetAtt SmartwatchKinesisStream.Arn
+      SourceParameters:
+        KinesisStreamParameters:
+          StartingPosition: LATEST   # REQUIRED
+      Target: !Ref SmartwatchSNSTopic
+
   PipeRole:
     Type: AWS::IAM::Role
     Properties:
@@ -90,15 +97,3 @@ Resources:
                   - kinesis:DescribeStream
                   - kinesis:ListShards
                 Resource: !GetAtt SmartwatchKinesisStream.Arn
-
-  # EventBridge Pipe: Kinesis → SNS
-  SmartwatchEventPipe:
-    Type: AWS::Pipes::Pipe
-    Properties:
-      RoleArn: !GetAtt PipeRole.Arn
-      Source: !GetAtt SmartwatchKinesisStream.Arn
-      SourceParameters:
-        KinesisStreamParameters:
-          BatchSize: 100
-          MaximumBatchingWindowInSeconds: 60
-      Target: !Ref SmartwatchSNSTopic
