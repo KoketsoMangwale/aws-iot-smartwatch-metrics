@@ -138,6 +138,7 @@ python simulator/smartwatch_simulator.py
 }
 ```
 * **DynamoDB** → Table `SmartWatchData` should receive records. (Table to be created as a future enhancement)
+* **Lambda** → Lambda for processing and alerting.  (Function to be created as a future enhancement)
 * **Kinesis** → View incoming records from IoT Core, under **Data Stream** > `Data viewer` tab.
 * **EnventBridge Pipe** Filtering → To check for a treshold before alerts are sent, add a filter as below to the Pipe
   ```
