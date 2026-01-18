@@ -169,7 +169,7 @@ sam delete
 
 ## 📌 Notes
 
-* You can easily extend this to add **API Gateway WebSocket** + a **live dashboard**.
+* Easily extend this to add **API Gateway WebSocket** + a **live dashboard**.
 * The PoC uses **PAY\_PER\_REQUEST** DynamoDB and **1 shard** in Kinesis for simplicity; scale based on device count.
 * IoT Core requires **device provisioning** with valid X.509 certificates.
 
@@ -179,8 +179,3 @@ sam delete
 
 MIT License – feel free to modify and use.
 
----
-
-If you want, I can **add the IoT Core certificate creation commands** and **WebSocket dashboard extension** to the README so it becomes a complete end-to-end developer guide.
-
-Do you want me to expand it with that next?
